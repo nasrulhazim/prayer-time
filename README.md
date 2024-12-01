@@ -12,13 +12,19 @@ A modern, responsive web application that displays Islamic prayer times and loca
 - 📱 Responsive design for all devices
 - ⚡ No build process required
 
-## Demo Features
+## Features
 
 - Display of daily prayer times (Fajr, Sunrise, Dhuhr, Asr, Maghrib, Isha, etc.)
 - Current time and date
 - Local weather information (temperature and conditions)
 - Location-based services
 - Settings management through a modal interface
+
+## Screenshots
+
+<img src="assets/prayer-time.png" alt="Prayer Time">
+
+<img src="assets/setting.png" alt="Prayer Time Setting">
 
 ## Prerequisites
 
