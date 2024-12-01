@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prayer Time</title>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="h-full bg-slate-50" x-data="prayerClockSettings()">
+    <div class="min-h-full">
+        <nav class="border-b border-gray-200 bg-white">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="flex h-16 justify-between">
+                    <div class="flex items-center font-bold">
+                        Prayer Time
+                    </div>
+
+                    <div class="flex items-center">
+                        <button type="button"
+                            class="relative rounded-full bg-white p-1 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                            @click="showModal = true">
+                            <span class="sr-only">View settings</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke-width="1.5" stroke="currentColor" class="h-6 w-6">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Weather and Clock Header -->
+        <header class="bg-slate-50">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-4">
+                <div class="flex justify-between items-center">
+                    <!-- Weather Section -->
+                    <div x-show="weather" class="flex items-center space-x-4">
+                        <div>
+                            <h2 class="text-lg font-bold" x-text="`${weather.temp}°C`"></h2>
+                            <p class="text-sm italic text-gray-600" x-text="weather.description"></p>
+                        </div>
+                    </div>
+                    <div x-show="weather">
+                        <h2 class="text-lg font-bold" x-text="weather.location"></h2>
+                    </div>
+                    <!-- Clock Section -->
+                    <div class="text-right">
+                      <div id="current-time" class="text-lg font-bold" x-text="currentTime"></div>
+                      <div id="current-date" class="text-sm italic text-gray-600" x-text="currentDate"></div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Prayer Times Section -->
+        <div class="py-10">
+            <main>
+                <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <h2 class="text-lg font-bold mb-4 text-center" x-show="prayerTimes">Prayer Times</h2>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center" x-show="prayerTimes">
+                        <template x-for="(time, name) in filteredPrayerTimes" :key="name">
+                            <div class="bg-white shadow-lg rounded-lg p-4 transition-all duration-300 hover:shadow-xl">
+                                <p class="text-lg font-bold capitalize" x-text="name"></p>
+                                <p class="text-sm text-gray-600" x-text="formatTime(time)"></p>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div x-show="showModal" x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+        x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100"
+        x-transition:leave-end="opacity-0 scale-95"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm"
+        @click="showModal = false" style="display: none;">
+        <div class="relative bg-white rounded-lg shadow-xl p-6 w-96 max-w-[90%]" @click.stop>
+            <button @click="showModal = false"
+                class="absolute top-4 right-4 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-full p-1">
+                <span class="sr-only">Close</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+
+            <h2 class="text-xl font-bold mb-4">Settings</h2>
+            <form @submit.prevent="saveApiKey" class="space-y-4">
+                <div>
+                    <label for="apiKey" class="block text-sm font-medium text-gray-700">OpenWeather API Key</label>
+                    <input type="text" id="apiKey" x-model="settings.apiKey" placeholder="Enter API Key"
+                        class="mt-1 block w-full py-2 px-4 border border-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+                </div>
+
+                <!-- Location Information -->
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <label class="block text-sm font-medium text-gray-700">Location</label>
+                        <button type="button" @click="refreshCoordinates()"
+                            class="text-sm text-indigo-600 hover:text-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded px-2 py-1">
+                            Refresh Location
+                        </button>
+                    </div>
+                    <div class="text-sm text-gray-600">
+                        <template x-if="settings.latitude && settings.longitude">
+                            <p>Lat: <span x-text="settings.latitude.toFixed(4)"></span>, Long: <span
+                                    x-text="settings.longitude.toFixed(4)"></span></p>
+                        </template>
+                        <template x-if="!settings.latitude || !settings.longitude">
+                            <p>Location not set</p>
+                        </template>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit"
+                        class="w-full px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200">
+                        Save Settings
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function prayerClockSettings() {
+            return {
+                showModal: false,
+                currentTime: '',
+                currentDate: '',
+                weather: null,
+                prayerTimes: null,
+                filteredPrayerTimes: null,
+                settings: {
+                    apiKey: localStorage.getItem('apiKey') || '',
+                    latitude: localStorage.getItem('latitude') || null,
+                    longitude: localStorage.getItem('longitude') || null,
+                },
+                init() {
+                    this.updateDateTime();
+                    this.initializeLocation();
+                    setInterval(() => {
+                        this.updateDateTime();
+                    }, 1000);
+                },
+                async initializeLocation() {
+                    // Check if we have coordinates in localStorage
+                    if (this.settings.latitude && this.settings.longitude) {
+                        // Use stored coordinates
+                        if (this.settings.apiKey) this.fetchWeather();
+                        this.fetchPrayerTimes();
+                    } else {
+                        // Request new coordinates
+                        await this.getUserCoordinates();
+                    }
+                },
+                refreshCoordinates() {
+                    this.getUserCoordinates().then(() => {
+                        if (this.settings.apiKey) this.fetchWeather();
+                        this.fetchPrayerTimes();
+                    });
+                },
+                saveApiKey() {
+                    localStorage.setItem('apiKey', this.settings.apiKey);
+                    this.showModal = false;
+                    if (this.settings.apiKey && this.settings.latitude && this.settings.longitude) {
+                        this.fetchWeather();
+                    }
+                    if (this.settings.latitude && this.settings.longitude) {
+                      this.fetchPrayerTimes();
+                  }
+                },
+                updateDateTime() {
+                    const now = new Date();
+                    this.currentTime = now.toLocaleTimeString('en-US');
+                    this.currentDate = now.toLocaleDateString('en-GB');
+                },
+                formatTime(time) {
+                    const [hours, minutes] = time.split(':');
+                    const date = new Date();
+                    date.setHours(hours, minutes);
+                    return date.toLocaleTimeString('en-US', {
+                        hour: 'numeric',
+                        minute: '2-digit'
+                    });
+                },
+                async getUserCoordinates() {
+                    if (!navigator.geolocation) {
+                        console.error('Geolocation is not supported by your browser.');
+                        return;
+                    }
+
+                    return new Promise((resolve, reject) => {
+                        navigator.geolocation.getCurrentPosition(
+                            (position) => {
+                                this.settings.latitude = position.coords.latitude;
+                                this.settings.longitude = position.coords.longitude;
+
+                                localStorage.setItem('latitude', this.settings.latitude);
+                                localStorage.setItem('longitude', this.settings.longitude);
+
+                                resolve();
+                            },
+                            (error) => {
+                                console.error('Error retrieving location:', error);
+                                reject(error);
+                            }
+                        );
+                    });
+                },
+                async fetchWeather() {
+                    if (!this.settings.latitude || !this.settings.longitude) {
+                        console.error('Latitude and Longitude are required for fetching weather data.');
+                        return;
+                    }
+                    try {
+                        const {
+                            data
+                        } = await axios.get(
+                            `https://api.openweathermap.org/data/2.5/weather`, {
+                                params: {
+                                    lat: this.settings.latitude,
+                                    lon: this.settings.longitude,
+                                    units: 'metric',
+                                    appid: this.settings.apiKey,
+                                },
+                            }
+                        );
+
+                        const toTitleCase = (str) => {
+                            return str
+                                .split(' ')
+                                .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                                .join(' ');
+                        };
+
+                        this.weather = {
+                            temp: Math.round(data.main.temp),
+                            description: toTitleCase(data.weather[0].description),
+                            location: data.name,
+                        };
+                    } catch (error) {
+                        console.error('Failed to fetch weather data:', error);
+                        this.weather = null;
+                    }
+                },
+                async fetchPrayerTimes() {
+                    if (!this.settings.latitude || !this.settings.longitude) {
+                        console.error('Latitude and Longitude are required for fetching prayer times.');
+                        return;
+                    }
+                    try {
+                        const {
+                            data
+                        } = await axios.get(
+                            `https://api.aladhan.com/v1/timings`, {
+                                params: {
+                                    latitude: this.settings.latitude,
+                                    longitude: this.settings.longitude,
+                                    method: 2,
+                                },
+                            }
+                        );
+
+                        this.prayerTimes = data.data.timings;
+
+                        const keysToDisplay = [
+                            "Fajr",
+                            "Sunrise",
+                            "Dhuhr",
+                            "Asr",
+                            "Sunset",
+                            "Maghrib",
+                            "Isha",
+                            "Imsak"
+                        ];
+                        this.filteredPrayerTimes = Object.fromEntries(
+                            Object.entries(this.prayerTimes).filter(([key]) =>
+                                keysToDisplay.includes(key)
+                            )
+                        );
+                    } catch (error) {
+                        console.error('Failed to fetch prayer times:', error);
+                        this.prayerTimes = null;
+                        this.filteredPrayerTimes = null;
+                    }
+                },
+            };
+        }
+    </script>
+</body>
+
+</html>
